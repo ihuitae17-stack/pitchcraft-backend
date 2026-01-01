@@ -12,8 +12,14 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """앱 시작/종료 시 실행되는 이벤트"""
-    # 시작 시: 데이터베이스 테이블 생성
-    await init_db()
+    # 시작 시: 데이터베이스 테이블 생성 시도
+    try:
+        await init_db()
+        print("✅ Database connected successfully!")
+    except Exception as e:
+        print(f"⚠️ Database connection failed: {e}")
+        print("📌 App will start without database. Configure DATABASE_URL to enable full features.")
+    
     print("🚀 PitchCraft Backend Server Started!")
     yield
     # 종료 시
