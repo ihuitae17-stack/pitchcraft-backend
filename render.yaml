@@ -1,0 +1,10 @@
+# Render.com Build Configuration
+#
+# This file tells Render to use Python native build instead of Docker
+
+# Build command
+build:
+  - pip install -r requirements.txt
+
+# Start command
+start: uvicorn app.main:app --host 0.0.0.0 --port $PORT
