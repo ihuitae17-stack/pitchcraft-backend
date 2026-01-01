@@ -1,21 +1,14 @@
-# FastAPI 핵심
-fastapi==0.104.1
-uvicorn==0.24.0
-python-multipart==0.0.6
+# FastAPI 핵심 (최소 버전)
+fastapi
+uvicorn
 
-# 데이터베이스
-sqlalchemy==2.0.23
-aiosqlite==0.19.0
+# 유효성 검사 (필수)
+pydantic
+pydantic-settings
 
-# 인증 (순수 Python - 컴파일 불필요)
-python-jose==3.3.0
-passlib==1.7.4
-
-# 유효성 검사
-pydantic==2.5.2
-pydantic-settings==2.1.0
-email-validator==2.1.0
+# 인증 (순수 Python)
+python-jose
+passlib
 
 # 유틸리티
-python-dotenv==1.0.0
-httpx==0.25.2
+python-dotenv
