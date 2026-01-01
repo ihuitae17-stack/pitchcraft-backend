@@ -1,20 +1,16 @@
 # FastAPI 핵심
 fastapi==0.104.1
-uvicorn[standard]==0.24.0
+uvicorn==0.24.0
 python-multipart==0.0.6
 
-# 데이터베이스
-sqlalchemy[asyncio]==2.0.23
-asyncpg==0.29.0
-alembic==1.12.1
+# 데이터베이스 (SQLite 사용 - PostgreSQL은 나중에)
+sqlalchemy==2.0.23
+aiosqlite==0.19.0
 
-# Redis & Celery
-redis==5.0.1
-celery==5.3.4
-
-# 인증
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+# 인증 (간단한 버전)
+python-jose==3.3.0
+passlib==1.7.4
+bcrypt==4.1.2
 
 # 유효성 검사
 pydantic==2.5.2
@@ -24,7 +20,3 @@ email-validator==2.1.0
 # 유틸리티
 python-dotenv==1.0.0
 httpx==0.25.2
-
-# 개발용
-pytest==7.4.3
-pytest-asyncio==0.21.1

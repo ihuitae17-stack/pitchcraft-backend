@@ -6,10 +6,10 @@ from typing import List
 class Settings(BaseSettings):
     """애플리케이션 설정"""
     
-    # 데이터베이스
-    database_url: str = "postgresql+asyncpg://postgres:pitchcraft123@localhost:5432/pitchcraft"
+    # 데이터베이스 (SQLite 기본값 - Render 무료 호환)
+    database_url: str = "sqlite+aiosqlite:///./pitchcraft.db"
     
-    # Redis
+    # Redis (선택사항)
     redis_url: str = "redis://localhost:6379/0"
     
     # JWT
