@@ -6,8 +6,8 @@ from app.config import get_settings
 
 settings = get_settings()
 
-# 비밀번호 해싱
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# 비밀번호 해싱 (sha256_crypt - 순수 Python, 컴파일 불필요)
+pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
