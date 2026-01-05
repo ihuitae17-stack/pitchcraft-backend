@@ -1,4 +1,5 @@
 import uuid
+import os
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,14 @@ from app.models.user import User
 from app.models.video import Video
 from app.models.analysis import Analysis
 from app.schemas.analysis import AnalysisRequest, AnalysisResponse, AnalysisSummary
+
+# Celery는 선택적 (Render 무료 티어에서는 사용 불가)
+USE_CELERY = os.getenv("USE_CELERY", "false").lower() == "true"
+if USE_CELERY:
+    try:
+        from app.workers.analysis_tasks import process_video_analysis
+    except ImportError:
+        USE_CELERY = False
 
 router = APIRouter(prefix="/analyses", tags=["분석"])
 
@@ -24,7 +33,8 @@ async def request_analysis(
     """
     투구 분석 요청
     
-    분석은 백그라운드에서 비동기로 처리됩니다.
+    Celery가 활성화되면 비동기 처리, 아니면 즉시 더미 결과 반환.
+    (실제 분석은 클라이언트 TensorFlow.js에서 수행)
     """
     # 영상 확인
     result = await db.execute(
@@ -41,28 +51,44 @@ async def request_analysis(
             detail="영상을 찾을 수 없습니다"
         )
     
-    if video.status not in ["uploaded", "completed"]:
+    if video.status not in ["uploaded", "completed", "pending"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"분석할 수 없는 상태입니다: {video.status}"
         )
     
-    # 분석 레코드 생성
+    # 분석 레코드 생성 (Render에서는 즉시 결과 설정)
+    mock_result = {
+        'velocity_estimate': 128.0,
+        'efficiency_score': 78,
+        'overall_grade': 'B+',
+        'peak_times': {'pelvis': 0.10, 'torso': 0.15, 'upperArm': 0.20, 'forearm': 0.25},
+        'violations': [],
+        'is_valid_sequence': True,
+        'note': 'Server-side placeholder (실제 분석은 클라이언트에서 수행)'
+    }
+    
     analysis = Analysis(
         video_id=video.id,
         user_id=current_user.id,
-        metrics=None,  # 처리 후 채워짐
+        metrics=mock_result if not USE_CELERY else None,
+        velocity_estimate=mock_result['velocity_estimate'] if not USE_CELERY else None,
+        efficiency_score=mock_result['efficiency_score'] if not USE_CELERY else None,
+        overall_grade=mock_result['overall_grade'] if not USE_CELERY else None,
     )
     db.add(analysis)
     
     # 영상 상태 업데이트
-    video.status = "processing"
+    video.status = "completed" if not USE_CELERY else "processing"
     
     await db.flush()
     await db.refresh(analysis)
     
-    # TODO: Celery 태스크 트리거
-    # background_tasks.add_task(process_video_analysis, str(analysis.id))
+    # Celery가 활성화된 경우에만 비동기 처리
+    if USE_CELERY:
+        process_video_analysis.delay(str(analysis.id))
+    
+    await db.commit()
     
     return AnalysisResponse.model_validate(analysis)
 

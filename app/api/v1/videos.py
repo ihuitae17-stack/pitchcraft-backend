@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
+from app.core.storage import generate_presigned_upload_url, ensure_bucket_exists
 from app.models.user import User
 from app.models.video import Video
 from app.schemas.analysis import VideoResponse, UploadUrlResponse
@@ -23,8 +24,7 @@ async def request_upload_url(
     """
     영상 업로드 URL 요청
     
-    실제 S3/MinIO 연동 시 Presigned URL을 반환합니다.
-    현재는 로컬 개발용 더미 URL을 반환합니다.
+    MinIO Presigned URL을 반환합니다.
     """
     # 파일 크기 제한 (100MB)
     max_size = 100 * 1024 * 1024
@@ -43,6 +43,12 @@ async def request_upload_url(
             detail=f"허용된 파일 형식: {', '.join(allowed_extensions)}"
         )
     
+    # 버킷 확인/생성
+    try:
+        ensure_bucket_exists()
+    except Exception as e:
+        print(f"[Warning] Bucket check failed: {e}")
+    
     # 영상 레코드 생성
     video_id = uuid.uuid4()
     storage_path = f"videos/{current_user.id}/{video_id}/{filename}"
@@ -58,9 +64,13 @@ async def request_upload_url(
     db.add(video)
     await db.flush()
     
-    # TODO: 실제 Presigned URL 생성 (S3/MinIO 연동 시)
-    # 현재는 더미 URL 반환
-    upload_url = f"http://localhost:9000/{storage_path}?X-Amz-Signature=dummy"
+    # 실제 Presigned URL 생성
+    try:
+        upload_url = generate_presigned_upload_url(storage_path, expires_in=3600)
+    except Exception as e:
+        # MinIO 연결 실패 시 폴백
+        print(f"[Warning] Presigned URL generation failed: {e}")
+        upload_url = f"http://localhost:9000/{storage_path}?error=minio_unavailable"
     
     return UploadUrlResponse(
         upload_url=upload_url,

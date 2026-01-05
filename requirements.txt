@@ -3,12 +3,30 @@ fastapi
 uvicorn
 
 # 유효성 검사 (필수)
-pydantic
+pydantic[email]
 pydantic-settings
 
 # 인증 (순수 Python)
-python-jose
-passlib
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
 
 # 유틸리티
 python-dotenv
+
+# 비동기 작업 (Celery)
+celery[redis]
+
+# S3/MinIO 클라이언트
+boto3
+
+# 영상 분석
+mediapipe
+opencv-python-headless
+numpy
+
+# 데이터베이스
+sqlalchemy[asyncio]
+asyncpg
+aiosqlite
+psycopg2-binary

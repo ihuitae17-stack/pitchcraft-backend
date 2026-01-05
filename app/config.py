@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
+    # MinIO/S3 설정
+    minio_endpoint: str = "http://localhost:9000"
+    minio_access_key: str = "minioadmin"
+    minio_secret_key: str = "minioadmin123"
+    minio_bucket: str = "pitchcraft-videos"
+    
     # 앱 설정
     debug: bool = True
     cors_origins: str = "http://localhost:3000,http://localhost:5173,https://pitchcraft-baseballcommunity.netlify.app"
@@ -34,3 +40,4 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """설정 싱글톤 반환"""
     return Settings()
+

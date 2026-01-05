@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -28,7 +28,26 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # MinIO (S3 호환 오브젝트 스토리지)
+  minio:
+    image: minio/minio:latest
+    container_name: pitchcraft-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -46,10 +65,16 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:pitchcraft123@db:5432/pitchcraft
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=dev-secret-key-change-in-production
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET=pitchcraft-videos
     depends_on:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
   # Celery Worker (분석 작업 처리)
@@ -63,12 +88,19 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:pitchcraft123@db:5432/pitchcraft
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=dev-secret-key-change-in-production
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET=pitchcraft-videos
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
 
 volumes:
   postgres_data:
   redis_data:
+  minio_data:

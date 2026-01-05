@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1 import auth, videos, analyses
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -19,6 +20,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# API 라우터 등록
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(videos.router, prefix="/api/v1")
+app.include_router(analyses.router, prefix="/api/v1")
 
 
 @app.get("/")
@@ -45,8 +51,9 @@ async def test_endpoint():
     return {
         "message": "API is working!",
         "features": [
-            "User authentication (coming soon)",
-            "Video upload (coming soon)",
-            "Pitch analysis (coming soon)"
+            "User authentication",
+            "Video upload",
+            "Pitch analysis"
         ]
     }
+
